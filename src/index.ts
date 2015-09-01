@@ -10,7 +10,7 @@ export class PropertyClassActivator extends ClassActivator {
     return singleton || (singleton = new PropertyClassActivator());
   }
 
-  constructor(container: Container = Container.instance, classActivator: ClassActivator = ClassActivator.instance) {
+  constructor(protected container: Container = Container.instance, protected classActivator: ClassActivator = ClassActivator.instance) {
     super();
     this.container = container;
     this.classActivator = classActivator;
@@ -34,8 +34,24 @@ export class PropertyClassActivator extends ClassActivator {
   }
 }
 
-export function inject(target: Object, propertyKey: string|symbol) {
+export function inject(targetOrType: Object, propertyKey?: string|symbol): any {
+  if (propertyKey) {
+    // presume annotation was used like @inject on property
+    injectFromMetadata(targetOrType, propertyKey);
+  } else {
+    // presume annotation was used like @inject(Type)
+    return function(target: Object, propertyKey: string|symbol) {
+      injectType(target, propertyKey, targetOrType);
+    }
+  }
+}
+
+function injectFromMetadata(target: Object, propertyKey: string|symbol) {
   var Type = Metadata.getOwn('design:type', target, propertyKey);
+  injectType(target, propertyKey, Type);
+}
+
+function injectType(target: Object, propertyKey: string|symbol, Type: Object) {
   if (Type) {
     var Constructor = target.constructor;
     var injectables = Metadata.getOwn(MetadataKey, Constructor);
