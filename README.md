@@ -2,7 +2,7 @@
 
 aurelia-property-injection is a library for the [Aurelia](http://www.aurelia.io/) platform, enabling us to automatically dependency inject properties.
 
-```javascript
+```typescript
 // greeter.ts
 export class Greeter {
   welcome(name) {
@@ -16,6 +16,19 @@ import {Greeter} from './greeter';
 
 class Meeting {
   @inject greeter: Greeter;
+
+  greetAll() {
+    return this.greeter.welcome('everybody');
+  }
+}
+
+```
+
+Alternative syntax for non-typed languages
+
+```javascript
+class Meeting {
+  @inject(Greeter) greeter;
 
   greetAll() {
     return this.greeter.welcome('everybody');
