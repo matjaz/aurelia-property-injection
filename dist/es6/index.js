@@ -3,25 +3,31 @@ import { ClassActivator, Container } from 'aurelia-dependency-injection';
 export const MetadataKey = 'di:propInjectables';
 var singleton;
 export class PropertyClassActivator extends ClassActivator {
-    constructor(container = Container.instance, classActivator = ClassActivator.instance) {
+    constructor(container = Container.instance) {
         super();
         this.container = container;
-        this.classActivator = classActivator;
-        this.container = container;
-        this.classActivator = classActivator;
     }
     static get instance() {
         return singleton || (singleton = new PropertyClassActivator());
     }
     invoke(fn, args) {
-        var instance = this.classActivator.invoke(fn, args);
-        var injectables = Metadata.getOwn(MetadataKey, fn);
+        var instance = Object.create(fn.prototype || Object.prototype);
+        // inject properties before calling constructor
+        this.injectProperties(instance, fn);
+        var result = Function.apply.call(fn, instance, args);
+        if (result && typeof result == 'object') {
+            instance = result;
+            this.injectProperties(instance, fn);
+        }
+        return instance;
+    }
+    injectProperties(instance, fn) {
+        var injectables = Metadata.getOwn(MetadataKey, fn || instance.constructor);
         if (injectables) {
             for (var propertyKey in injectables) {
                 this.injectProperty(instance, propertyKey, injectables[propertyKey]);
             }
         }
-        return instance;
     }
     injectProperty(instance, propertyKey, value) {
         Object.defineProperty(instance, propertyKey, {
