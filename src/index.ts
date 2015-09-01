@@ -10,21 +10,29 @@ export class PropertyClassActivator extends ClassActivator {
     return singleton || (singleton = new PropertyClassActivator());
   }
 
-  constructor(protected container: Container = Container.instance, protected classActivator: ClassActivator = ClassActivator.instance) {
+  constructor(protected container: Container = Container.instance) {
     super();
-    this.container = container;
-    this.classActivator = classActivator;
   }
 
   invoke(fn: Function, args: any[]) {
-    var instance = this.classActivator.invoke(fn, args);
-    var injectables = Metadata.getOwn(MetadataKey, fn);
+    var instance = Object.create(fn.prototype || Object.prototype);
+    // inject properties before calling constructor
+    this.injectProperties(instance, fn);
+    var result = Function.apply.call(fn, instance, args);
+    if (result && typeof result == 'object') {
+      instance = result;
+      this.injectProperties(instance, fn);
+    }
+    return instance;
+  }
+
+  injectProperties(instance: Object, fn?: Function) {
+    var injectables = Metadata.getOwn(MetadataKey, fn || instance.constructor);
     if (injectables) {
       for (var propertyKey in injectables) {
         this.injectProperty(instance, propertyKey, injectables[propertyKey]);
       }
     }
-    return instance;
   }
 
   injectProperty(instance: Object, propertyKey: string, value: Function) {
