@@ -45,18 +45,14 @@ export class PropertyClassActivator extends ClassActivator {
 export function inject(targetOrType: Object, propertyKey?: string|symbol): any {
   if (propertyKey) {
     // presume annotation was used like @inject on property
-    injectFromMetadata(targetOrType, propertyKey);
+    var Type = Metadata.getOwn('design:type', targetOrType, propertyKey);
+    injectType(targetOrType, propertyKey, Type);
   } else {
-    // presume annotation was used like @inject(Type)
+    // presume annotation was used like @inject(Type) on property
     return function(target: Object, propertyKey: string|symbol) {
       injectType(target, propertyKey, targetOrType);
     }
   }
-}
-
-function injectFromMetadata(target: Object, propertyKey: string|symbol) {
-  var Type = Metadata.getOwn('design:type', target, propertyKey);
-  injectType(target, propertyKey, Type);
 }
 
 function injectType(target: Object, propertyKey: string|symbol, Type: Object) {
